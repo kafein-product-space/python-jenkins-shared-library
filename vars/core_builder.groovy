@@ -155,44 +155,34 @@ def call(Map config) {
             }
 
         }
-
+        
         post {
             always {
-                // Take necessary actions
                 script {
-                    // Cleanup
-                    lib_cleanupController(
-                        config
-                    )
-
-                    lib_postbuildController(
-                        config
-                    )
-                }
-
-                script {
-                    try {
-                        withCredentials([string(credentialsId: 'teams-webhook-url', variable: 'URL_WEBHOOK')]) {
-                            office365ConnectorSend webhookUrl: "${URL_WEBHOOK}"
-                        }
-                    } catch (_) {
-                        echo "Teams credential does not exists, skipping."
-                    }
+                    lib_cleanupController(config)
+                    lib_postbuildController(config)
                 }
             }
             success {
                 script {
-                    def publisher = LastChanges.getLastChangesPublisher "PREVIOUS_REVISION", "SIDE", "LINE", true, true, "", "", "", "", ""
+                    def buildTime = lib_teamsnotifications.getBuildTime()
+                    lib_teamsnotifications('Success', "The build has completed successfully in ${buildTime}.", 'teams-webhook-url')
+                }
+                script {
+                    def publisher = LastChanges.getLastChangesPublisher("PREVIOUS_REVISION", "SIDE", "LINE", true, true, "", "", "", "", "")
                     publisher.publishLastChanges()
                     def htmlDiff = publisher.getHtmlDiff()
                     writeFile file: 'build-diff.html', text: htmlDiff
 
-                    lib_helper.triggerJob(
-                        config
-                    )
+                    lib_helper.triggerJob(config)
+                }
+            }
+            failure {
+                script {
+                    def buildTime = lib_teamsNotifications.getBuildTime()
+                    lib_teamsNotifications.notify('Failure', "The build has failed after ${buildTime}. Please check the logs for details.", 'teams-webhook-url')
                 }
             }
         }
-
     }
 }

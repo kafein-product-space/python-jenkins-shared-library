@@ -43,6 +43,7 @@ def configureInit(Map config) {
     config.permit_trigger_branch = [
         "development",
         "dev",
+        "test",
         "uat",
         "devops",
         "devops-preprod",
