@@ -1,8 +1,15 @@
 // README: This library works with Teams Workflows (PowerAutomate app, not connector. You must configure Credentials id and webhook url)
 def call(String status, String message, String credentialsId) {
     def colors = [
-        'Success': 'Good',    // green color for success
-        'Failure': 'Attention' // red color for failure
+        'Success': 'Good',         // green color for success
+        'Failure': 'Attention'     // red color for failure
+    ]
+
+    // Additional color for Trivy scan status
+    def trivyColors = [
+        'Vulnerabilities found': 'Attention', // red color for vulnerabilities found
+        'Clean': 'Good',                   // green color for no vulnerabilities
+        'Trivy scan status not available': 'Default' // default color for null/empty status
     ]
 
     if (!colors.containsKey(status)) {
@@ -10,10 +17,14 @@ def call(String status, String message, String credentialsId) {
     }
 
     def color = colors[status]
-    def title = "Jenkins Build Notification"
+    def title = "Jenkins Notification"
     def jobName = env.JOB_NAME        // Get the Jenkins job name
     def jobLink = env.BUILD_URL       // Get the direct link to the Jenkins job
     def buildNumber = env.BUILD_NUMBER // Get the build number
+
+    // Determine Trivy scan status color
+    def trivyStatus = env.TRIVY_STATUS ?: 'Trivy scan status not available'
+    def trivyColor = trivyColors[trivyStatus] ?: 'Default'
 
     withCredentials([string(credentialsId: "${credentialsId}", variable: 'webhookUrl')]) {
         def payload = [
@@ -72,6 +83,13 @@ def call(String status, String message, String credentialsId) {
                             [
                                 "type": "TextBlock",
                                 "text": "${message}",
+                                "wrap": true
+                            ],
+                            [
+                                "type": "TextBlock",
+                                "weight": "Bolder",
+                                "color": "${trivyColor}",
+                                "text": "Trivy Scan Status: ${trivyStatus}",
                                 "wrap": true
                             ],
                             [
