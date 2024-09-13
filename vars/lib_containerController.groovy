@@ -71,7 +71,7 @@ def call(Map config) {
         // Define the push task for the current image
         pushScanTasks["${repoName}_push"] = {
             stage("Pushing ${repoName}") {
-                withCredentials([[$class: "UsernamePasswordMultiBinding", credentialsId: it.credentialsId ? it.credentialsId : "user-nexus", usernameVariable: "USERNAME", passwordVariable: "PASSWORD"]]) {
+                withCredentials([[$class: "UsernamePasswordMultiBinding", credentialsId: "container-artifact-registry", usernameVariable: "USERNAME", passwordVariable: "PASSWORD"]]) {
                     sh """
                     docker login --username $USERNAME --password $PASSWORD ${container_repository}
                     docker push ${imageTag} && \
