@@ -1,5 +1,8 @@
 def call(Map config) {
 
+    def triggerRef = config.containsKey('trigger_ref') ? config.trigger_ref : '$.ref'
+    def triggerRegexpFilter = config.containsKey('trigger_regexp_filter') ? config.trigger_regexp_filter : '^(dev|test)'
+
     if ( config.containsKey("github_hook") && config.github_hook ) {
         properties([pipelineTriggers([githubPush()])])
     }
